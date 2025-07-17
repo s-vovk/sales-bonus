@@ -79,12 +79,12 @@ function analyzeSalesData(data, options) {
 
   // @TODO: Индексация продавцов и товаров для быстрого доступа
   const sellerIndex = sellerStats.reduce(
-    (result, item) => ({ ...result, [item.id]: item }),
+    (result, seller) => ({ ...result, [seller.id]: seller }),
     {}
   );
 
   const productIndex = data.products.reduce(
-    (result, item) => ({ ...result, [item.sku]: item }),
+    (result, product) => ({ ...result, [product.sku]: product }),
     {}
   );
 
@@ -98,13 +98,14 @@ function analyzeSalesData(data, options) {
     seller.revenue += record.total_amount;
 
     // Расчёт прибыли для каждого товара
-    record.items.forEach((item) => {
-      const product = productIndex[item.sku]; // Товар
+    record.items.forEach((sale) => {
+      const product = productIndex[sale.sku]; // Товар
+
       // Посчитать себестоимость (cost) товара как product.purchase_price, умноженную на количество товаров из чека
-      const cost = product.purchase_price * item.quantity;
+      const cost = product.purchase_price * sale.quantity;
 
       // Посчитать выручку (revenue) с учётом скидки через функцию calculateRevenue
-      const revenue = calculateRevenue(item);
+      const revenue = calculateRevenue(sale);
 
       // Посчитать прибыль: выручка минус себестоимость
       const profit = revenue - cost;
@@ -112,10 +113,10 @@ function analyzeSalesData(data, options) {
       seller.profit += profit;
 
       // Учёт количества проданных товаров
-      if (!seller.products_sold[item.sku]) {
-        seller.products_sold[item.sku] = 1;
+      if (!seller.products_sold[sale.sku]) {
+        seller.products_sold[sale.sku] = sale.quantity;
       } else {
-        seller.products_sold[item.sku] += 1;
+        seller.products_sold[sale.sku] += sale.quantity;
       }
     });
   });
